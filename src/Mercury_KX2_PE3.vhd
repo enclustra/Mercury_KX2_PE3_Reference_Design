@@ -1,5 +1,5 @@
----------------------------------------------------------------------------------------------------
--- Copyright (c) 2022 by Enclustra GmbH, Switzerland.
+----------------------------------------------------------------------------------------------------
+-- Copyright (c) 2024 by Enclustra GmbH, Switzerland.
 --
 -- Permission is hereby granted, free of charge, to any person obtaining a copy of
 -- this hardware, software, firmware, and associated documentation files (the
@@ -17,18 +17,18 @@
 -- HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 -- OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 -- PRODUCT OR THE USE OR OTHER DEALINGS IN THE PRODUCT.
----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 
----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 -- libraries
----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 -- entity declaration
----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 entity Mercury_KX2_PE3 is
   generic (
     DDR3_ADDR_WIDTH : natural
@@ -383,6 +383,14 @@ entity Mercury_KX2_PE3 is
     -- Rst_N
     Rst_N                          : in      std_logic;
     
+    -- SDIO
+    SDIO_CLK                       : inout   std_logic;
+    SDIO_CMD                       : inout   std_logic;
+    SDIO_D0                        : inout   std_logic;
+    SDIO_D1                        : inout   std_logic;
+    SDIO_D2                        : inout   std_logic;
+    SDIO_D3                        : inout   std_logic;
+    
     -- SIO
     SIO0_PERST_N                   : inout   std_logic;
     SIO1                           : inout   std_logic;
@@ -419,9 +427,9 @@ end Mercury_KX2_PE3;
 
 architecture rtl of Mercury_KX2_PE3 is
 
-  ---------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------
   -- component declarations
-  ---------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------
   component Mercury_KX2 is
     port (
       SYS_CLK_clk_p       : in     std_logic;
@@ -500,9 +508,9 @@ architecture rtl of Mercury_KX2_PE3 is
     );
   end component IOBUF;
 
-  ---------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------
   -- signal declarations
-  ---------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------
   signal IIC_MGMT_sda_i   : std_logic;
   signal IIC_MGMT_sda_o   : std_logic;
   signal IIC_MGMT_sda_t   : std_logic;
@@ -534,8 +542,6 @@ architecture rtl of Mercury_KX2_PE3 is
   signal QSPI_ss_i        : std_logic;
   signal QSPI_ss_o        : std_logic;
   signal QSPI_ss_t        : std_logic;
-  signal UART_rxd         : std_logic;
-  signal UART_txd         : std_logic;
   signal MDIO_mdc         : std_logic;
   signal MDIO_mdio_i      : std_logic;
   signal MDIO_mdio_o      : std_logic;
@@ -547,12 +553,16 @@ architecture rtl of Mercury_KX2_PE3 is
   signal RGMII_tx_ctl     : std_logic;
   signal RGMII_txc        : std_logic;
   signal LedCount         : unsigned(23 downto 0);
+  
+  ----------------------------------------------------------------------------------------------------
+  -- attribute declarations
+  ----------------------------------------------------------------------------------------------------
 
 begin
   
-  ---------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------
   -- processor system instance
-  ---------------------------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------------------------
   Mercury_KX2_i: component Mercury_KX2
     port map (
       SYS_CLK_clk_p        => Clk200_P,
@@ -635,7 +645,6 @@ begin
     O => IIC_MGMT_scl_i,
     T => IIC_MGMT_scl_t
   );
-  
   IIC_USER_sda_iobuf: component IOBUF
     port map (
     I => IIC_USER_sda_o,
@@ -651,7 +660,6 @@ begin
     O => IIC_USER_scl_i,
     T => IIC_USER_scl_t
   );
-  
   process (Clk50)
   begin
     if rising_edge (Clk50) then
